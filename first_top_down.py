@@ -1,5 +1,5 @@
 import pygame
-
+import math
 pygame.init()
 
 
@@ -18,11 +18,14 @@ class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.width = 32
-        self.height = 32
+        self.width = 62
+        self.height = 62
         self.velocity_x = 0
         self.velocity_y = 0
         self.speed = 5
+
+        TARGET_WIDTH = 40
+        TARGET_HEIGHT = 40
         
         # Load sprite sheet (Ensure you have this file: "assets/NinjaFrog/jump.png")
         # If the file causes an error, replace the path with a simple placeholder like 'None' 
@@ -34,7 +37,7 @@ class Player:
             print("Warning: Could not load player image. Using a colored surface.")
             self.image = pygame.Surface([self.width, self.height])
             self.image.fill((255, 0, 0)) # Red square
-            
+        self.image = pygame.transform.scale(self.image, (TARGET_WIDTH, TARGET_HEIGHT))
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
@@ -55,6 +58,7 @@ class Player:
         # Reset velocity to 0 before checking keys
         self.velocity_x = 0
         self.velocity_y = 0
+
         
         # --- Horizontal movement ---
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -67,10 +71,28 @@ class Player:
             self.velocity_y = -self.speed # Negative Y moves up
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.velocity_y = self.speed # Positive Y moves down
+        # 2. If moving too fast, scale down
+        magnitude = math.sqrt(self.velocity_x**2 + self.velocity_y**2)
+        if magnitude > self.speed:
+            # Divide each velocity by magnitude, then multiply by desired speed
+            self.velocity_x = (self.velocity_x / magnitude) * self.speed
+            self.velocity_y = (self.velocity_y / magnitude) * self.speed
 
-        # Optional: Normalize diagonal movement. If both x and y are set,
-        # the player moves faster diagonally. To fix, you'd use vector math,
-        # but for learning, keeping it simple is fine for now.
+idle_sheet = pygame.image.load("assets/NinjaFrog/idle.png").convert_alpha()
+sheet_width = idle_sheet.get_width()
+sheet_height = idle_sheet.get_height()
+frame_width = sheet_width // 11  # 11 frames total
+frame_height = sheet_height
+idle_frames = []
+for i in range(11):
+    frame = idle_sheet.subsurface((i * frame_width, 0, frame_width, frame_height))
+    idle_frames.append(frame)
+background = pygame.image.load("assets/Background/Gray.png").convert()
+def load_background():
+    for x in range(0, SCREEN_WIDTH, background.get_width()):
+        for y in range(0, SCREEN_HEIGHT, background.get_height()):
+            screen.blit(background, (x, y))
+
 
 # Instantiate player
 player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2) # Spawn in the center
@@ -86,9 +108,10 @@ while RUNNING:
     keys = pygame.key.get_pressed()
     player.handle_input(keys)
     player.update() # <--- THIS WAS MISSING from the main loop
+   
+   
     
-    # 3. DRAWING
-    screen.fill('gray') # Changed to gray for better contrast
+    load_background()
     
     player.draw(screen)
 
