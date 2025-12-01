@@ -14,11 +14,18 @@ pygame.display.set_caption("TEST")
 surface = pygame.Surface((SCREEN_WIDTH, SCREEN_WIDTH))
 surface.fill('gray')
 #player
-player = pygame.image.load("assets/NinjaFrog/jump.png")
+player = pygame.image.load("assets/NinjaFrog/jump.png").convert_alpha()
 player_x = (screen.get_width() - player.get_width()) // 2
 player_y = (screen.get_width() - player.get_height()) // 2
 velocity_x = 5
 velocity_y = 5
+
+#enemy
+enemy = pygame.image.load("C:/Users/guiza/Desktop/project py/top down/assets/MainCharacters/MaskDude/jump.png").convert_alpha()
+enemy_x = (screen.get_width() - enemy.get_width()) // 2 - 200
+enemy_y = (screen.get_width() - enemy.get_height()) // 2 - 200
+enemy_velocity_x = 1
+enemy_velocity_y = 1
 while RUNNING:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -57,8 +64,19 @@ while RUNNING:
         velocity_y *= 0.7
     player_x += velocity_x
     player_y += velocity_y
+    if player_x > enemy_x:
+        enemy_x += enemy_velocity_x
+    if player_x < enemy_x:
+        enemy_x -= enemy_velocity_x
+    if player_y > enemy_y:
+        enemy_y += enemy_velocity_y
+    if player_y < enemy_y:
+        enemy_y -= enemy_velocity_y
+    if enemy_x < 0 - enemy.get_width():
+        enemy_x = SCREEN_WIDTH
 
     screen.blit(surface, (0, 0))
     screen.blit(player, (player_x, player_y))
+    screen.blit(enemy, (enemy_x, enemy_y))
     pygame.display.update()
     clock.tick(FPS)
