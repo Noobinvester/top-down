@@ -1,5 +1,5 @@
 import pygame
-
+import random
 pygame.init()
 
 # SCREEN
@@ -19,13 +19,24 @@ player_x = (screen.get_width() - player.get_width()) // 2
 player_y = (screen.get_width() - player.get_height()) // 2
 velocity_x = 5
 velocity_y = 5
-
+player_rect = player.get_rect()
 #enemy
 enemy = pygame.image.load("C:/Users/guiza/Desktop/project py/top down/assets/MainCharacters/MaskDude/jump.png").convert_alpha()
 enemy_x = (screen.get_width() - enemy.get_width()) // 2 - 200
 enemy_y = (screen.get_width() - enemy.get_height()) // 2 - 200
 enemy_velocity_x = 1
 enemy_velocity_y = 1
+enemy_rect = enemy.get_rect()
+#SCOREBOARD
+score = 0
+lives = 3
+enemy_killed = 0
+
+score_font = pygame.font.Font(None, 36)
+score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
+#safe zone
+safe_zone = pygame.draw.circle(surface, ('green'), (100, 100), 100)
+# GAME LOOP
 while RUNNING:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -75,8 +86,29 @@ while RUNNING:
     if enemy_x < 0 - enemy.get_width():
         enemy_x = SCREEN_WIDTH
 
+    # Update rect positions before collision check
+    player_rect.x = player_x
+    player_rect.y = player_y
+    enemy_rect.x = enemy_x
+    enemy_rect.y = enemy_y
+    if player_rect.colliderect(enemy_rect):
+        lives -= 1
+        enemy_x = random.randint(0, SCREEN_WIDTH - enemy.get_width())
+        enemy_y = random.randint(0, SCREEN_HEIGHT - enemy.get_height())
+    #safe zone logic
+    if player_rect.colliderect(safe_zone):
+        enemy_velocity_x = 0
+        enemy_velocity_y = 0
+    else:
+        enemy_velocity_x = 1
+        enemy_velocity_y = 1
+     
+
+
     screen.blit(surface, (0, 0))
     screen.blit(player, (player_x, player_y))
     screen.blit(enemy, (enemy_x, enemy_y))
+    score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
     pygame.display.update()
     clock.tick(FPS)
