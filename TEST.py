@@ -115,6 +115,8 @@ while RUNNING:
         lives -= 1
         enemy_x = random.randint(0, SCREEN_WIDTH - enemy.get_width())
         enemy_y = random.randint(0, SCREEN_HEIGHT - enemy.get_height())
+    score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
+#safe zone (drawn in game loop)
     #safe zone logic - check if player is FULLY inside circle
     # Calculate player center point
     player_center_x = player_x + player.get_width() / 2
@@ -135,9 +137,9 @@ while RUNNING:
         enemy_velocity_y = 1
    
      #end screen logic
-    if lives == 0:
+    if lives <= 0:
         RUNNING = False
-    while lives == 0:
+    while lives <= 0:
         screen.fill((0, 0, 0))
         screen.blit(end_screen_text, end_screen_rect)
         screen.blit(score_text, (screen.get_width() // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2 + 50))
