@@ -10,9 +10,12 @@ RUNNING = True
 clock = pygame.time.Clock()
 # timer
 def display_time():
-    timer = pygame.time.get_ticks() // 1000
-    
-    return timer
+   current_timer = int(pygame.time.get_ticks() // 1000 - start_time)
+   current_time_surf = fps_font.render(f"Time: {current_timer}", True, (fps_color))
+   current_time_surf_rect = current_time_surf.get_rect(topright=(SCREEN_WIDTH - 10, 10))
+   screen.blit(current_time_surf, current_time_surf_rect)
+
+start_time = 0
 
 # Create window
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -43,7 +46,7 @@ enemy_velocity_y = 1
 enemy_rect = enemy.get_rect()
 #SCOREBOARD
 score = 0
-lives = 3
+lives = 0
 enemy_killed = 0
 # end screen
 end_screen_font = pygame.font.Font(None, 72)
@@ -63,7 +66,6 @@ while RUNNING:
             RUNNING = False
     key = pygame.key.get_pressed()
 
-    print(display_time())
     velocity_x = 0
     velocity_y = 0
 
@@ -144,6 +146,10 @@ while RUNNING:
         screen.blit(end_screen_text, end_screen_rect)
         screen.blit(score_text, (screen.get_width() // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2 + 50))
         screen.blit(restart_text, restart_rect)
+        player_scaled = pygame.transform.rotozoom(player, 0, 5)
+        player_end_x = screen.get_width() // 2 - player_scaled.get_width() // 2
+        player_end_y = end_screen_rect.top - player_scaled.get_height() - 50
+        screen.blit(player_scaled, (player_end_x, player_end_y))
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -157,6 +163,7 @@ while RUNNING:
                 enemy_killed = 0
                 enemy_x = random.randint(0, SCREEN_WIDTH - enemy.get_width())
                 enemy_y = random.randint(0, SCREEN_HEIGHT - enemy.get_height())
+                start_time = int(pygame.time.get_ticks() // 1000)
             
     
     # Draw everything
@@ -170,6 +177,7 @@ while RUNNING:
     score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
     screen.blit(score_text, (screen.get_width() // 2 - score_text.get_width() // 2, 10))
     screen.blit(fps_text, (10, 10))
+    display_time()
     
     
     pygame.display.update()
