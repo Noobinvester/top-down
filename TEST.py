@@ -44,9 +44,10 @@ enemy_y = (screen.get_width() - enemy.get_height()) // 2 - 200
 enemy_velocity_x = 1
 enemy_velocity_y = 1
 enemy_rect = enemy.get_rect()
+
 #SCOREBOARD
 score = 0
-lives = 0
+lives = 3
 enemy_killed = 0
 # end screen
 end_screen_font = pygame.font.Font(None, 72)
@@ -55,6 +56,37 @@ end_screen_rect = end_screen_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEI
 restart_text = end_screen_font.render("Press Space to Restart", True, (255, 255, 255))
 restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 200))
 
+
+#enemy spawn timer
+enemy_spawn_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(enemy_spawn_timer, 2000)  # Spawn enemy every 2 seconds
+
+enemy_list_rect = []
+
+def enemy_movement(enemy_list):
+    if enemy_list:
+        for enemy_rect in enemy_list:
+            # Calculate if player is in safe zone
+            player_center_x = player_x + player.get_width() / 2
+            player_center_y = player_y + player.get_height() / 2
+            distance = ((player_center_x - safe_zone_center[0])**2 + (player_center_y - safe_zone_center[1])**2)**0.5
+            player_radius = max(player.get_width(), player.get_height()) / 2
+
+            # Only move if player is NOT in safe zone
+            if distance + player_radius >= safe_zone_radius:
+                if player_x > enemy_rect.x:
+                    enemy_rect.x += 1
+                if player_x < enemy_rect.x:
+                    enemy_rect.x -= 1
+                if player_y > enemy_rect.y:
+                    enemy_rect.y += 1
+                if player_y < enemy_rect.y:
+                    enemy_rect.y -= 1
+        return enemy_list
+    else:
+        return []
+
+
 # Scoreboard
 score_font = pygame.font.Font(None, 36)
 score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
@@ -62,6 +94,13 @@ score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed:
 # GAME LOOP
 while RUNNING:
     for event in pygame.event.get():
+           #enemy spawn timer event
+        if event.type == enemy_spawn_timer:
+            spawn_x = random.randint(0, SCREEN_WIDTH - enemy.get_width())
+            spawn_y = random.randint(0, SCREEN_HEIGHT - enemy.get_height())
+            new_enemy = enemy.get_rect(topleft=(spawn_x, spawn_y))
+            enemy_list_rect.append(new_enemy)
+            
         if event.type == pygame.QUIT:
             RUNNING = False
     key = pygame.key.get_pressed()
@@ -97,46 +136,30 @@ while RUNNING:
         velocity_y *= 0.7
     player_x += velocity_x
     player_y += velocity_y
-    if player_x > enemy_x:
-        enemy_x += enemy_velocity_x
-    if player_x < enemy_x:
-        enemy_x -= enemy_velocity_x
-    if player_y > enemy_y:
-        enemy_y += enemy_velocity_y
-    if player_y < enemy_y:
-        enemy_y -= enemy_velocity_y
-    if enemy_x < 0 - enemy.get_width():
-        enemy_x = SCREEN_WIDTH
+    # if player_x > enemy_x:
+    #     enemy_x += enemy_velocity_x
+    # if player_x < enemy_x:
+    #     enemy_x -= enemy_velocity_x
+    # if player_y > enemy_y:
+    #     enemy_y += enemy_velocity_y
+    # if player_y < enemy_y:
+    #     enemy_y -= enemy_velocity_y
+    # if enemy_x < 0 - enemy.get_width():
 
-    # Update rect positions before collision check
+    enemy_list_rect = enemy_movement(enemy_list_rect)
+
+    # Update player rect position for collision check
     player_rect.x = player_x
     player_rect.y = player_y
-    enemy_rect.x = enemy_x
-    enemy_rect.y = enemy_y
-    if player_rect.colliderect(enemy_rect):
-        lives -= 1
-        enemy_x = random.randint(0, SCREEN_WIDTH - enemy.get_width())
-        enemy_y = random.randint(0, SCREEN_HEIGHT - enemy.get_height())
+
+    # Check collision with all spawned enemies
+    for enemy_rect in enemy_list_rect:
+        if player_rect.colliderect(enemy_rect):
+            lives -= 1
+            enemy_list_rect.remove(enemy_rect)
+            break
+
     score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
-#safe zone (drawn in game loop)
-    #safe zone logic - check if player is FULLY inside circle
-    # Calculate player center point
-    player_center_x = player_x + player.get_width() / 2
-    player_center_y = player_y + player.get_height() / 2
-
-    # Calculate distance from player center to safe zone center
-    distance = ((player_center_x - safe_zone_center[0])**2 + (player_center_y - safe_zone_center[1])**2)**0.5
-
-    # Player is fully inside if distance + player "radius" < safe zone radius
-    # Using max dimension of player as diameter, so radius is half of that
-    player_radius = max(player.get_width(), player.get_height()) / 2
-
-    if distance + player_radius < safe_zone_radius:
-        enemy_velocity_x = 0
-        enemy_velocity_y = 0
-    else:
-        enemy_velocity_x = 1
-        enemy_velocity_y = 1
    
      #end screen logic
     if lives <= 0:
@@ -150,6 +173,7 @@ while RUNNING:
         player_end_x = screen.get_width() // 2 - player_scaled.get_width() // 2
         player_end_y = end_screen_rect.top - player_scaled.get_height() - 50
         screen.blit(player_scaled, (player_end_x, player_end_y))
+        enemy_list_rect = []  # Clear all enemies
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -173,7 +197,9 @@ while RUNNING:
     # Draw safe zone circle
     pygame.draw.circle(surface, ('green'), safe_zone_center, safe_zone_radius)
     screen.blit(player, (player_x, player_y))
-    screen.blit(enemy, (enemy_x, enemy_y))
+    # Draw all spawned enemies
+    for enemy_rect in enemy_list_rect:
+        screen.blit(enemy, (enemy_rect.x, enemy_rect.y))
     score_text = score_font.render(f"Score: {score}  Lives: {lives}  Enemies Killed: {enemy_killed}", True, (255, 255, 255))
     screen.blit(score_text, (screen.get_width() // 2 - score_text.get_width() // 2, 10))
     screen.blit(fps_text, (10, 10))
