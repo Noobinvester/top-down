@@ -3,12 +3,14 @@ import random
 pygame.init()
 
 # SCREEN
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 1000
+screen_size = pygame.display.get_desktop_sizes()
+SCREEN_WIDTH = int(screen_size[0][0] * 0.8)
+SCREEN_HEIGHT = int(screen_size[0][1] * 0.8)
 FPS = 60
 RUNNING = True
 clock = pygame.time.Clock()
 # timer
+
 def display_time():
    current_timer = int(pygame.time.get_ticks() // 1000 - start_time)
    current_time_surf = fps_font.render(f"Time: {current_timer}", True, (fps_color))
@@ -38,7 +40,7 @@ player_rect = player.get_rect()
 safe_zone_center = (100, 100)
 safe_zone_radius = 100
 #enemy
-enemy = pygame.image.load("C:/Users/guiza/Desktop/project py/top down/assets/MainCharacters/MaskDude/jump.png").convert_alpha()
+enemy = pygame.image.load("assets/MainCharacters/MaskDude/jump.png").convert_alpha()
 enemy_x = (screen.get_width() - enemy.get_width()) // 2 - 200
 enemy_y = (screen.get_width() - enemy.get_height()) // 2 - 200
 enemy_velocity_x = 1
